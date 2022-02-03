@@ -1,80 +1,63 @@
-import { servers, users, removeS, removeU} from '../db/index.js';
+import { User } from '../models/model.js';
 
-export const getAllServers = (req, res) => {
-    res.status(200).json(servers);
-}
-
-export const getAllUsers = (req, res) => {
-    res.status(200).json(users);
-}
-
-export const createServer = (req, res) => {
-    const newServer = {
-        id: Date.now().toString(),
-        status: req.body.status,
-        name: req.body.name
+export const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find();
+        res.status(200).json(users);
+    } catch(err) {
+        console.log(err);
     }
-    servers.push(newServer);
-    res.status(201).json(newServer);
 }
 
-export const createUser = (req, res) => {
-    const newUser = {
-        id: Date.now().toString(),
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        salary: req.body.salary
+export const createUser = async (req, res) => {
+    try {
+        const newUser = new User({
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            salary: Number(req.body.salary)
+        });
+        await newUser.save();
+        res.status(200).json(newUser);
+    } catch(err) {
+        console.log(err);
     }
-    users.push(newUser);
-    res.status(201).json(newUser);
+   
 }
 
-export const removeServer = (req, res) => {
-    removeS(req.params.id);
-    res.json({message:'Has been removed server ' + req.params.id});
-}
+export const removeUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findOne({
+            _id: id
+        });
 
-export const removeUser = (req, res) => {
-    removeU(req.params.id);
-    res.json({message:'Has been removed user ' + req.params.id});
-}
-
-export const getOneServer = (req, res) => {
-    res.status(201).json(servers.find((s) => s.id === req.params.id));
-}
-
-export const getOneUser = (req, res) => {
-    res.status(201).json(users.find((s) => s.id === req.params.id));
-}
-
-export const updateServer = (req, res) => {
-    let serverIndex;
-    const server = servers.find((s, index) => {
-        if(s.id === req.params.id) {
-            serverIndex = index;
-            return true;
+        if (user) {
+            await User.deleteOne({
+                _id: id,
+            });
+            res.status(200).json({message:'Has been removed user ' + id});
         }
-    });
-    const newServer = {
-        ...server,
-        name: req.body.name,
+    } catch(err) {
+        console.log(err);
     }
-    servers.splice(serverIndex, 1, newServer);
-    res.status(201).json(newServer);
 }
 
-export const updateUser = (req, res) => {
-    let userIndex;
-    const user = users.find((s, index) => {
-        if(s.id === req.params.id) {
-            userIndex = index;
-            return true;
-        }
-    });
-    const newUser = {
-        ...user,
-        ...req.body
+export const updateUser = async (req, res) => {
+    try {
+        let userIndex = req.params.id;
+        const newUser = {...req.body};
+        await User.findOneAndUpdate(
+            {
+                _id: userIndex
+            },
+            {
+                $set:{
+                    ...newUser
+                }
+            }
+        )
+        res.status(200).json(newUser);
+    } catch(err) {
+        console.log(err);
     }
-    users.splice(userIndex, 1, newUser);
-    res.status(201).json(newUser);
 }
