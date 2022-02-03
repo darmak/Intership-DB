@@ -73,7 +73,7 @@ export const updateUser = (req, res) => {
     });
     const newUser = {
         ...user,
-        salary: req.body.salary || "",
+        ...req.body
     }
     users.splice(userIndex, 1, newUser);
     res.status(201).json(newUser);
